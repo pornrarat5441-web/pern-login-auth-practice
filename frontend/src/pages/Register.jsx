@@ -23,7 +23,7 @@ const Register = ({ setUser }) => {
   }
 
   return (
-  <div className="min-h-screen flex items-center justify-center bg-gray-500">
+  <div className="min-h-[80vh] flex items-center justify-center bg-gray-500">
     <form className="bg-white p-6 rounded shadow-md" onSubmit={handleSubmit}>
       <h2 className="text-xl mb-4">Register</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}

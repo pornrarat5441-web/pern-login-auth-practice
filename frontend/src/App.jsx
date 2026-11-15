@@ -34,7 +34,7 @@ function App() {
 
   return (
     <Router>
-      <Navbar />
+      <Navbar user={user} setUser={setUser} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
