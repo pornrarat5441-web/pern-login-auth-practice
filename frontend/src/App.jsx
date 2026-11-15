@@ -37,8 +37,8 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/Register" element={<Register />} />
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/Register" element={<Register setUser={setUser} />} />
       </Routes>
     </Router>
   );
