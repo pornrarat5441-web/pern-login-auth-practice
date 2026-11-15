@@ -14,8 +14,8 @@ const Register = ({ setUser }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5001/api/auth/register", form);
-      setUser(res.data);
+      const res = await axios.post("/api/auth/register", form);
+      setUser(res.data.user);
       navigate("/");
     } catch (err) {
       setError("Registeration failed");
@@ -43,7 +43,7 @@ const Register = ({ setUser }) => {
       className="border p-2 w-full mb-3" 
       value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} />
 
-      <button type="submit" className="bg-blue-500 text-white p-2 w-full">Login</button>
+      <button type="submit" className="bg-blue-500 text-white p-2 w-full">Register</button>
     </form>
   </div>
   )
