@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= book.title %> - รีวิวหนังสือ</title>
+  <!-- เรียกใช้ไฟล์ CSS จาก Tailwind ที่ Build แล้ว (ปรับ path ตามโปรเจกต์ของคุณ) -->
+  <link rel="stylesheet" href="/css/output.css">
+  <!-- หรือเปิดใช้ CDN ชั่วคราวตอนทดสอบ Layout -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Navbar (สามารถเปลี่ยนเป็น <%- include('../partials/navbar') %> ได้) -->
+  <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="/" class="text-xl font-bold text-indigo-600">BookReview</a>
+      <div class="space-x-6 text-sm font-medium text-slate-600">
+        <a href="/" class="hover:text-indigo-600">Home</a>
+        <a href="/your-list" class="hover:text-indigo-600">Your List</a>
+        <a href="/rated-books" class="hover:text-indigo-600">Rated Books</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+    
+    <!-- ส่วนที่ 1: รายละเอียดหนังสือ (Book Details) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8">
+      <div class="flex flex-col md:flex-row gap-8">
+        
+        <!-- รูปปกหนังสือ -->
+        <div class="w-full md:w-1/3 flex-shrink-0">
+          <img 
+            src="<%= book.cover_image || 'https://via.placeholder.com/400x600?text=No+Cover' %>" 
+            alt="<%= book.title %>" 
+            class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-md mx-auto"
+          >
+        </div>
+
+        <!-- ข้อมูลหนังสือและปุ่ม Action -->
+        <div class="w-full md:w-2/3 flex flex-col justify-between">
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <span class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">
+                <%= book.genre || 'ทั่วไป' %>
+              </span>
+              <span class="text-sm text-slate-500">
+                • จำนวน <%= book.total_pages %> หน้า
+              </span>
+            </div>
+
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
+              <%= book.title %>
+            </h1>
+
+            <!-- คะแนนเฉลี่ย -->
+            <div class="flex items-center gap-3 mb-6">
+              <div class="flex items-center text-amber-400 text-xl">
+                <span>★</span>
+                <span class="ml-1 font-bold text-slate-800">
+                  <%= Number(book.avg_rating || 0).toFixed(1) %>
+                </span>
+              </div>
+              <span class="text-sm text-slate-500">
+                (จากทั้งหมด <%= reviews.length %> รีวิว)
+              </span>
+            </div>
+
+            <!-- เรื่องย่อ -->
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">เรื่องย่อ</h2>
+            <p class="text-slate-600 leading-relaxed mb-6 whitespace-pre-line">
+              <%= book.description %>
+            </p>
+          </div>
+
+          <!-- ปุ่มเพิ่ม/ลบจาก Your List -->
+          <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center gap-4">
+            <% if (user) { %>
+              <% if (isInList) { %>
+                <form action="/your-list/remove/<%= book.book_id %>" method="POST">
+                  <button type="submit" class="px-5 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded-xl font-medium text-sm transition flex items-center gap-2 group">
+                    <span class="group-hover:hidden">✓ อยู่ใน Your List แล้ว</span>
+                    <span class="hidden group-hover:inline">✕ ลบออกจาก Your List</span>
+                  </button>
+                </form>
+                <a href="/your-list" class="text-sm text-indigo-600 hover:underline font-medium">
+                  อัปเดตหน้าการอ่าน →
+                </a>
+              <% } else { %>
+                <form action="/your-list/add/<%= book.book_id %>" method="POST">
+                  <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm shadow-sm transition">
+                    + เพิ่มเข้า Your List
+                  </button>
+                </form>
+              <% } %>
+            <% } else { %>
+              <a href="/login" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-medium text-sm transition">
+                เข้าสู่ระบบเพื่อเพิ่มเข้าลิสต์
+              </a>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ส่วนที่ 2: ฟอร์มเขียนรีวิวและให้คะแนนดาว -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8">
+      <h2 class="text-xl font-bold text-slate-900 mb-4">
+        <%= userReview ? 'แก้ไขรีวิวของคุณ' : 'ให้คะแนนและเขียนรีวิว' %>
+      </h2>
+
+      <% if (user) { %>
+        <form action="/books/<%= book.book_id %>/review" method="POST" class="space-y-4">
+          
+          <!-- เลือกคะแนนดาว (1 - 5 ดาว) -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">คะแนนความพึงพอใจ</label>
+            <div class="flex items-center gap-2" id="star-container">
+              <% const currentRating = userReview ? userReview.rating : 5; %>
+              <% for (let i = 1; i <= 5; i++) { %>
+                <label class="cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="rating" 
+                    value="<%= i %>" 
+                    class="sr-only" 
+                    <%= currentRating === i ? 'checked' : '' %>
+                    required
+                  >
+                  <span class="star-icon text-3xl transition-colors <%= i <= currentRating ? 'text-amber-400' : 'text-slate-300' %>" data-value="<%= i %>">
+                    ★
+                  </span>
+                </label>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- กล่องข้อความรีวิว -->
+          <div>
+            <label for="comment" class="block text-sm font-medium text-slate-700 mb-2">ความคิดเห็นของคุณ</label>
+            <textarea 
+              id="comment" 
+              name="comment" 
+              rows="3" 
+              placeholder="แชร์ความรู้สึกหลังจากอ่านหนังสือเล่มนี้..."
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+              required
+            ><%= userReview ? userReview.comment : '' %></textarea>
+          </div>
+
+          <div class="flex justify-end">
+            <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm shadow-sm transition">
+              <%= userReview ? 'อัปเดตรีวิว' : 'ส่งรีวิว' %>
+            </button>
+          </div>
+        </form>
+      <% } else { %>
+        <div class="bg-slate-50 rounded-xl p-6 text-center border border-slate-200">
+          <p class="text-slate-600 text-sm mb-3">กรุณาเข้าสู่ระบบก่อนทำการให้คะแนนและเขียนรีวิว</p>
+          <a href="/login" class="inline-block px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+            เข้าสู่ระบบ
+          </a>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- ส่วนที่ 3: รายการรีวิวทั้งหมดจากผู้ใช้ -->
+    <section>
+      <h2 class="text-xl font-bold text-slate-900 mb-4">
+        รีวิวจากผู้อ่าน (<%= reviews.length %>)
+      </h2>
+
+      <% if (reviews.length === 0) { %>
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+          ยังไม่มีรีวิวสำหรับหนังสือเล่มนี้ มาเป็นคนแรกที่รีวิวกันเลย!
+        </div>
+      <% } else { %>
+        <div class="space-y-4">
+          <% reviews.forEach(review => { %>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <span class="font-semibold text-slate-900"><%= review.username %></span>
+                  <% if (user && user.id === review.user_id) { %>
+                    <span class="ml-2 px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-md font-medium">คุณ</span>
+                  <% } %>
+                  <div class="flex text-amber-400 text-sm mt-0.5">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <span class="<%= i <= review.rating ? 'text-amber-400' : 'text-slate-200' %>">★</span>
+                    <% } %>
+                  </div>
+                </div>
+                <span class="text-xs text-slate-400">
+                  <%= new Date(review.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                </span>
+              </div>
+              <p class="text-slate-600 text-sm leading-relaxed mt-3 whitespace-pre-line">
+                <%= review.comment %>
+              </p>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+  </main>
+
+  <!-- Script สำหรับเปลี่ยนสีดาวตอนกดเลือกคะแนน -->
+  <script>
+    const stars = document.querySelectorAll('.star-icon');
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = parseInt(star.getAttribute('data-value'));
+        stars.forEach(s => {
+          const sVal = parseInt(s.getAttribute('data-value'));
+          if (sVal <= val) {
+            s.classList.remove('text-slate-300');
+            s.classList.add('text-amber-400');
+          } else {
+            s.classList.remove('text-amber-400');
+            s.classList.add('text-slate-300');
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
