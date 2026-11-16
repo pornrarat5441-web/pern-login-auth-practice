@@ -1,0 +1,31 @@
+<footer class="bg-white border-t border-slate-200 mt-12">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+      
+      <!-- โลโก้และคำอธิบายสั้นๆ -->
+      <div class="text-center md:text-left">
+        <a href="/" class="inline-flex items-center gap-2 text-lg font-bold text-indigo-600">
+          <span>📚</span>
+          <span>BookReview</span>
+        </a>
+        <p class="text-xs text-slate-500 mt-1">
+          พื้นที่สำหรับคนรักการอ่าน บันทึกความคืบหน้า และแบ่งปันรีวิวหนังสือเล่มโปรด
+        </p>
+      </div>
+
+      <!-- เมนูลัด -->
+      <div class="flex flex-wrap justify-center gap-6 text-sm font-medium text-slate-600">
+        <a href="/" class="hover:text-indigo-600 transition">Home</a>
+        <a href="/your-list" class="hover:text-indigo-600 transition">Your List</a>
+        <a href="/rated-books" class="hover:text-indigo-600 transition">Rated Books</a>
+      </div>
+
+    </div>
+
+    <!-- เส้นคั่นและ Copyright -->
+    <div class="border-t border-slate-100 mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-400">
+      <p>© <%= new Date().getFullYear() %> BookReview. All rights reserved.</p>
+      <p>Built with PERN Stack (PostgreSQL, Express, EJS, Node.js)</p>
+    </div>
+  </div>
+</footer>

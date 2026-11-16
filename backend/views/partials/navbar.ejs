@@ -1,42 +1,74 @@
-<nav class="bg-gray-800 p-4 text-white flex justify-between items-center">
+<nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+    
+    <!-- โลโก้และชื่อเว็บ + เมนูหลัก (Desktop) -->
+    <div class="flex items-center gap-8">
+      <a href="/" class="flex items-center gap-2 text-xl font-bold text-indigo-600 hover:text-indigo-700 transition">
+        <span>📚</span>
+        <span>BookReview</span>
+      </a>
 
-  <a href="/" class="font-bold text-lg">
-    PERN Auth
-  </a>
+      <!-- ลิงก์นำทางแต่ละหน้า -->
+      <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-slate-600">
+        <a href="/" class="hover:text-indigo-600 transition">Home</a>
+        <a href="/your-list" class="hover:text-indigo-600 transition">Your List</a>
+        <a href="/rated-books" class="hover:text-indigo-600 transition">Rated Books</a>
+      </div>
+    </div>
 
-  <div class="flex items-center gap-4">
+    <!-- ส่วนแสดงชื่อผู้ใช้และปุ่ม Login / Logout -->
+    <div class="flex items-center gap-3">
+      <% if (user) { %>
+        <span class="hidden sm:inline-block text-sm text-slate-600">
+          สวัสดี, <strong class="text-slate-900 font-semibold"><%= user.name || user.email %></strong>
+        </span>
 
-    <% if (user) { %>
+        <button
+          id="logoutButton"
+          class="px-3.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 hover:border-red-600 text-xs sm:text-sm font-medium rounded-xl transition cursor-pointer"
+        >
+          Logout
+        </button>
+      <% } else { %>
+        <a href="/login" class="px-3.5 py-1.5 text-sm font-medium text-slate-600 hover:text-indigo-600 transition">
+          Login
+        </a>
+        <a href="/register" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm transition">
+          Register
+        </a>
+      <% } %>
 
-      <span class="text-sm">
-        Hello0000, <%= user.name %>
-      </span>
-
-      <button
-        id="logoutButton"
-        class="bg-red-500 hover:bg-red-600 px-3 py-2 rounded">
-        Logout
+      <!-- ปุ่มเปิดเมนูบนมือถือ (Hamburger Button) -->
+      <button 
+        id="mobileMenuBtn" 
+        type="button" 
+        class="md:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none"
+        aria-label="Toggle Menu"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
       </button>
-
-    <% } else { %>
-
-      <a href="/login" class="hover:text-gray-300">
-        Login
-      </a>
-
-      <a href="/register" class="hover:text-gray-300">
-        Register
-      </a>
-
-    <% } %>
+    </div>
 
   </div>
 
+  <!-- เมนู Dropdown สำหรับหน้าจอมือถือ -->
+  <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-2 text-sm font-medium text-slate-600">
+    <% if (user) { %>
+      <div class="pb-2 mb-2 border-b border-slate-100 text-xs text-slate-500">
+        เข้าสู่ระบบในชื่อ: <strong class="text-slate-800"><%= user.name || user.email %></strong>
+      </div>
+    <% } %>
+    <a href="/" class="block py-1.5 hover:text-indigo-600">Home</a>
+    <a href="/your-list" class="block py-1.5 hover:text-indigo-600">Your List</a>
+    <a href="/rated-books" class="block py-1.5 hover:text-indigo-600">Rated Books</a>
+  </div>
 </nav>
 
 <script>
+  // 1. ระบบ Logout เดิมของคุณ
   const logoutButton = document.getElementById('logoutButton');
-
   if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
       try {
@@ -50,10 +82,18 @@
         }
 
         window.location.href = '/';
-
       } catch (error) {
         alert(error.message);
       }
+    });
+  }
+
+  // 2. ระบบเปิด-ปิดเมนูบนมือถือ
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (mobileMenuBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
     });
   }
 </script>

@@ -38,6 +38,13 @@ app.use("/api/auth", authRoutes);
 // Page Routes
 app.use('/', pageRoutes);
 
+// Middleware ดักจับ 404 Not Found (วางไว้หลัง Routes ทั้งหมด)
+app.use((req, res) => {
+  res.status(404).render('pages/404', {
+    user: req.user || null
+  });
+});
+
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {

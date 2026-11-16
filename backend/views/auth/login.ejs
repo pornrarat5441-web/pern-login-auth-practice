@@ -1,75 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | PERN Auth</title>
+  <title>Login - BookReview</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="min-h-screen bg-gray-100">
+<body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
+  <!-- Navbar -->
   <%- include('../partials/navbar', { user }) %>
 
-  <main class="min-h-[80vh] flex items-center justify-center p-4">
+  <!-- Main Content -->
+  <main class="flex-grow flex items-center justify-center px-4 py-12">
 
-    <form id="loginForm"
-      class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-
-      <h2 class="text-2xl font-bold mb-6 text-center">
-        Login
-      </h2>
-
-      <p id="errorMessage"
-        class="hidden text-red-500 mb-4 text-sm">
-      </p>
-
-      <div class="mb-4">
-        <label for="email" class="block mb-2 font-medium">
-          Email
-        </label>
-
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="Enter your email"
-          required
-          class="border rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-md">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 text-2xl mb-3">
+          📚
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900">
+          ยินดีต้อนรับกลับมา
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">
+          เข้าสู่ระบบเพื่อจัดการรายการหนังสือและเขียนรีวิว
+        </p>
       </div>
 
-      <div class="mb-6">
-        <label for="password" class="block mb-2 font-medium">
-          Password
-        </label>
+      <!-- Form -->
+      <form id="loginForm" class="space-y-5">
 
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Enter your password"
-          required
-          class="border rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <!-- กล่องแจ้งเตือน Error -->
+        <div id="errorMessage" class="hidden p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm"></div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">
+            อีเมล (Email)
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="name@example.com"
+            required
+            class="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+          >
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">
+            รหัสผ่าน (Password)
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="กรอกรหัสผ่านของคุณ"
+            required
+            class="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+          >
+        </div>
+
+        <button
+          type="submit"
+          id="loginButton"
+          class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-semibold rounded-xl shadow-sm transition cursor-pointer"
         >
-      </div>
+          เข้าสู่ระบบ
+        </button>
 
-      <button
-        type="submit"
-        id="loginButton"
-        class="bg-blue-500 hover:bg-blue-600 text-white p-3 w-full rounded-md font-medium">
-        Login
-      </button>
+      </form>
 
-      <p class="text-center mt-5 text-gray-600">
-        Don't have an account?
-        <a href="/register" class="text-blue-500 hover:underline">
-          Register
+      <!-- ลิงก์ไปหน้าสมัครสมาชิก -->
+      <p class="text-center mt-6 pt-6 border-t border-slate-100 text-sm text-slate-600">
+        ยังไม่มีบัญชีผู้ใช้งาน?
+        <a href="/register" class="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline">
+          สมัครสมาชิก
         </a>
       </p>
 
-    </form>
+    </div>
+
   </main>
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
 
   <script>
     const loginForm = document.getElementById('loginForm');
@@ -81,7 +100,7 @@
 
       errorMessage.classList.add('hidden');
       loginButton.disabled = true;
-      loginButton.textContent = 'Logging in...';
+      loginButton.textContent = 'กำลังเข้าสู่ระบบ...';
 
       const formData = {
         email: loginForm.email.value.trim(),
@@ -101,7 +120,7 @@
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || 'Login failed');
+          throw new Error(data.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
         }
 
         window.location.href = '/';
@@ -112,7 +131,7 @@
 
       } finally {
         loginButton.disabled = false;
-        loginButton.textContent = 'Login';
+        loginButton.textContent = 'เข้าสู่ระบบ';
       }
     });
   </script>

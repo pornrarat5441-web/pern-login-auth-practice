@@ -31,8 +31,73 @@ router.use(async (req, res, next) => {
 });
 
 // Home
+// GET / - หน้าแรก (Featured Books, Top 10 Trending, All Books + Search/Filter)
 router.get('/', async (req, res) => {
-  res.render('pages/home', { user: req.user });
+  try {
+    const { search, genre } = req.query;
+
+    // 1. ดึงหนังสือแนะนำ (is_featured = TRUE)
+    const featuredResult = await pool.query(`
+      SELECT b.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.review_id) AS review_count
+      FROM books b
+      LEFT JOIN reviews r ON b.book_id = r.book_id
+      WHERE b.is_featured = TRUE
+      GROUP BY b.book_id
+      ORDER BY b.created_at DESC
+    `);
+
+    // 2. ดึง Top 10 หนังสือยอดนิยม (เรียงตามคะแนนเฉลี่ยสูงสุด)
+    const trendingResult = await pool.query(`
+      SELECT b.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.review_id) AS review_count
+      FROM books b
+      LEFT JOIN reviews r ON b.book_id = r.book_id
+      GROUP BY b.book_id
+      ORDER BY avg_rating DESC, review_count DESC, b.book_id ASC
+      LIMIT 10
+    `);
+
+    // 3. ดึงหนังสือทั้งหมด (รองรับการค้นหาชื่อและกรองหมวดหมู่)
+    let allBooksQuery = `
+      SELECT b.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.review_id) AS review_count
+      FROM books b
+      LEFT JOIN reviews r ON b.book_id = r.book_id
+      WHERE 1=1
+    `;
+    const queryParams = [];
+
+    if (search && search.trim() !== '') {
+      queryParams.push(`%${search.trim()}%`);
+      allBooksQuery += ` AND b.title ILIKE $${queryParams.length}`;
+    }
+
+    if (genre && genre.trim() !== '') {
+      queryParams.push(genre.trim());
+      allBooksQuery += ` AND b.genre = $${queryParams.length}`;
+    }
+
+    allBooksQuery += ` GROUP BY b.book_id ORDER BY b.created_at DESC`;
+    const allBooksResult = await pool.query(allBooksQuery, queryParams);
+
+    // 4. ดึงรายชื่อหมวดหมู่ทั้งหมดที่มีในระบบไปใส่ใน Dropdown
+    const genresResult = await pool.query(`
+      SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre != '' ORDER BY genre ASC
+    `);
+    const genres = genresResult.rows.map(row => row.genre);
+
+    res.render('pages/home', {
+      user: req.user || null,
+      featuredBooks: featuredResult.rows,
+      trendingBooks: trendingResult.rows,
+      allBooks: allBooksResult.rows,
+      genres,
+      search: search || '',
+      selectedGenre: genre || ''
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
 });
 
 // Login
@@ -187,6 +252,116 @@ router.post('/rated-books/delete/:reviewId', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('ไม่สามารถลบรีวิวได้');
+  }
+});
+
+//yourlist
+// 1. GET /your-list - แสดงรายการหนังสือใน Your List ของผู้ใช้
+router.get('/your-list', async (req, res) => {
+  // หากยังไม่ได้ต่อระบบล็อกอินเต็มรูปแบบ สามารถเปลี่ยนบรรทัดล่างเป็น const userId = req.user ? req.user.id : 1; เพื่อทดสอบก่อนได้
+  if (!req.user) return res.redirect('/login');
+
+  try {
+    const userId = req.user.id;
+
+    const result = await pool.query(`
+      SELECT 
+        ul.list_id,
+        ul.current_page,
+        ul.created_at,
+        b.book_id,
+        b.title,
+        b.genre,
+        b.cover_image,
+        b.total_pages
+      FROM user_lists ul
+      JOIN books b ON ul.book_id = b.book_id
+      WHERE ul.user_id = $1
+      ORDER BY ul.created_at DESC
+    `, [userId]);
+
+    res.render('pages/your_list', {
+      user: req.user,
+      userBooks: result.rows
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// 2. POST /your-list/add/:bookId - เพิ่มหนังสือเข้า Your List (เรียกใช้จากปุ่มในหน้า book.ejs)
+router.post('/your-list/add/:bookId', async (req, res) => {
+  if (!req.user) return res.redirect('/login');
+
+  try {
+    const userId = req.user.id;
+    const { bookId } = req.params;
+
+    await pool.query(`
+      INSERT INTO user_lists (user_id, book_id, current_page)
+      VALUES ($1, $2, 0)
+      ON CONFLICT (user_id, book_id) DO NOTHING
+    `, [userId, bookId]);
+
+    res.redirect(`/books/${bookId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('ไม่สามารถเพิ่มหนังสือเข้าลิสต์ได้');
+  }
+});
+
+// 3. POST /your-list/update/:bookId - อัปเดตหน้าที่อ่านถึงปัจจุบัน
+router.post('/your-list/update/:bookId', async (req, res) => {
+  if (!req.user) return res.redirect('/login');
+
+  try {
+    const userId = req.user.id;
+    const { bookId } = req.params;
+    const currentPage = parseInt(req.body.current_page, 10) || 0;
+
+    // ตรวจสอบจำนวนหน้าทั้งหมดของหนังสือ เพื่อป้องกันการกรอกเลขเกินจำนวนหน้าจริง
+    const bookCheck = await pool.query('SELECT total_pages FROM books WHERE book_id = $1', [bookId]);
+    if (bookCheck.rows.length === 0) return res.status(404).send('ไม่พบหนังสือ');
+
+    const totalPages = bookCheck.rows[0].total_pages;
+    const validPage = Math.max(0, Math.min(currentPage, totalPages));
+
+    await pool.query(`
+      UPDATE user_lists 
+      SET current_page = $1 
+      WHERE user_id = $2 AND book_id = $3
+    `, [validPage, userId, bookId]);
+
+    res.redirect('/your-list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('ไม่สามารถอัปเดตความคืบหน้าได้');
+  }
+});
+
+// 4. POST /your-list/remove/:bookId - ลบหนังสือออกจาก Your List
+router.post('/your-list/remove/:bookId', async (req, res) => {
+  if (!req.user) return res.redirect('/login');
+
+  try {
+    const userId = req.user.id;
+    const { bookId } = req.params;
+
+    await pool.query(
+      'DELETE FROM user_lists WHERE user_id = $1 AND book_id = $2',
+      [userId, bookId]
+    );
+
+    // ถ้ากดลบมาจากหน้า book ให้เด้งกลับหน้า book แต่ถ้าลบจากหน้า your-list ให้รีเฟรชหน้า your-list
+    const referer = req.get('Referer');
+    if (referer && referer.includes('/books/')) {
+      return res.redirect(`/books/${bookId}`);
+    }
+    res.redirect('/your-list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('ไม่สามารถลบหนังสือออกจากลิสต์ได้');
   }
 });
 

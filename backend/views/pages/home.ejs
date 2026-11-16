@@ -1,55 +1,243 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home | PERN Auth</title>
+  <title>Home - BookReview</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <!-- เปิดใช้ CDN ชั่วคราวเผื่อคลาส Tailwind ใหม่ๆ ยังไม่ถูก Build ลง styles.css -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="min-h-screen bg-gray-100">
+<body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
+  <!-- เรียกใช้ Navbar เดิมของโปรเจกต์ -->
   <%- include('../partials/navbar', { user }) %>
 
-  <main class="min-h-[80vh] flex items-center justify-center p-4">
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full space-y-12">
 
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg text-center">
-
+    <!-- แถบทักทายผู้ใช้แบบกะทัดรัด (แทนกล่อง Auth ใหญ่ตรงกลางเดิม) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <% if (user) { %>
-
-        <h2 class="text-2xl font-bold mb-4 text-gray-800">
-          Welcomee, <%= user.name %>!
-        </h2>
-
-        <p class="text-gray-600">
-          Email: <%= user.email %>
-        </p>
-
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">
+            ยินดีต้อนรับ, <span class="text-indigo-600"><%= user.name || user.email %></span> 👋
+          </h2>
+          <p class="text-xs text-slate-500">เลือกหนังสือที่สนใจ บันทึกหน้าการอ่าน หรือเขียนรีวิวให้เพื่อนๆ อ่านกันเลย</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/your-list" class="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold rounded-xl transition">
+            📖 Your List
+          </a>
+          <a href="/rated-books" class="px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold rounded-xl transition">
+            ★ Rated Books
+          </a>
+        </div>
       <% } else { %>
-
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">
-          Please log in or register
-        </h2>
-
-        <div class="flex flex-col gap-4">
-
-          <a href="/login"
-            class="w-full text-white bg-blue-500 p-3 rounded-md hover:bg-blue-600 font-medium">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">ค้นพบหนังสือเล่มโปรดเล่มต่อไปของคุณ</h2>
+          <p class="text-xs text-slate-500">เข้าสู่ระบบเพื่อบันทึกความคืบหน้าการอ่านและให้คะแนนหนังสือ</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/login" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition">
             Login
           </a>
-
-          <a href="/register"
-            class="w-full text-gray-800 bg-gray-300 p-3 rounded-md hover:bg-gray-400 font-medium">
+          <a href="/register" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition">
             Register
           </a>
-
         </div>
-
       <% } %>
-
     </div>
 
+    <!-- ส่วนที่ 1: Featured Books (แบนเนอร์หนังสือแนะนำที่ is_featured = TRUE) -->
+    <% if (featuredBooks && featuredBooks.length > 0) { %>
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900">✨ หนังสือแนะนำประจำสัปดาห์</h2>
+          <% if (featuredBooks.length > 1) { %>
+            <div class="flex gap-2">
+              <button onclick="prevSlide()" class="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 shadow-sm">‹</button>
+              <button onclick="nextSlide()" class="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 shadow-sm">›</button>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-md">
+          <% featuredBooks.forEach((book, index) => { %>
+            <div class="featured-slide <%= index === 0 ? 'flex' : 'hidden' %> flex-col md:flex-row items-center gap-6 md:gap-10 p-6 md:p-10 transition-all">
+              <img 
+                src="<%= book.cover_image || 'https://via.placeholder.com/300x450?text=No+Cover' %>" 
+                alt="<%= book.title %>" 
+                class="w-36 md:w-44 h-52 md:h-64 object-cover rounded-xl shadow-lg flex-shrink-0"
+              >
+              <div class="text-center md:text-left flex-grow">
+                <span class="inline-block px-3 py-1 bg-white/15 text-indigo-200 text-xs font-semibold rounded-full mb-3">
+                  <%= book.genre || 'แนะนำ' %>
+                </span>
+                <h3 class="text-2xl md:text-3xl font-bold mb-3"><%= book.title %></h3>
+                <p class="text-indigo-100/90 text-sm md:text-base line-clamp-3 mb-6 max-w-2xl">
+                  <%= book.description %>
+                </p>
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                  <a href="/books/<%= book.book_id %>" class="px-6 py-2.5 bg-white text-indigo-900 hover:bg-indigo-50 font-semibold text-sm rounded-xl shadow transition">
+                    ดูรายละเอียด & รีวิว
+                  </a>
+                  <span class="text-sm text-amber-300 font-semibold">
+                    ★ <%= Number(book.avg_rating || 0).toFixed(1) %> (<%= book.review_count || 0 %> รีวิว)
+                  </span>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- ส่วนที่ 2: Top 10 Trending Books (เรียงตามคะแนนเฉลี่ยสูงสุด) -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900">🔥 Top 10 หนังสือยอดนิยม</h2>
+          <p class="text-xs text-slate-500 mt-0.5">จัดอันดับจากคะแนนรีวิวเฉลี่ยสูงสุด</p>
+        </div>
+      </div>
+
+      <% if (!trendingBooks || trendingBooks.length === 0) { %>
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
+          ยังไม่มีข้อมูลหนังสือในระบบ
+        </div>
+      <% } else { %>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-5">
+          <% trendingBooks.forEach((book, index) => { %>
+            <a href="/books/<%= book.book_id %>" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-indigo-200 transition flex flex-col">
+              <div class="relative aspect-[2/3] bg-slate-100 overflow-hidden">
+                <!-- ป้ายอันดับ 1 - 10 -->
+                <span class="absolute top-2.5 left-2.5 w-7 h-7 rounded-lg <%= index < 3 ? 'bg-amber-400 text-slate-900' : 'bg-slate-900/80 text-white' %> font-bold text-xs flex items-center justify-center shadow">
+                  #<%= index + 1 %>
+                </span>
+                <img 
+                  src="<%= book.cover_image || 'https://via.placeholder.com/300x450?text=No+Cover' %>" 
+                  alt="<%= book.title %>" 
+                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                >
+              </div>
+              <div class="p-3.5 flex-grow flex flex-col justify-between">
+                <div>
+                  <span class="text-[11px] font-medium text-indigo-600"><%= book.genre || 'ทั่วไป' %></span>
+                  <h3 class="font-bold text-slate-900 text-sm line-clamp-2 mt-0.5 group-hover:text-indigo-600 transition">
+                    <%= book.title %>
+                  </h3>
+                </div>
+                <div class="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs">
+                  <span class="font-bold text-amber-500">★ <%= Number(book.avg_rating || 0).toFixed(1) %></span>
+                  <span class="text-slate-400"><%= book.review_count || 0 %> รีวิว</span>
+                </div>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- ส่วนที่ 3: ค้นหาและรายการหนังสือทั้งหมด (All Books + Search/Filter) -->
+    <section id="all-books">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900">📚 หนังสือทั้งหมด</h2>
+          <p class="text-xs text-slate-500 mt-0.5">ค้นหาตามชื่อเรื่องหรือเลือกตามหมวดหมู่</p>
+        </div>
+
+        <!-- ฟอร์มค้นหาและกรองหมวดหมู่ -->
+        <form action="/" method="GET" class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <input 
+            type="text" 
+            name="search" 
+            value="<%= search || '' %>" 
+            placeholder="ค้นหาชื่อหนังสือ..." 
+            class="px-4 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+          >
+          <select 
+            name="genre" 
+            class="px-4 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:border-indigo-500 outline-none"
+          >
+            <option value="">ทุกหมวดหมู่</option>
+            <% if (genres && genres.length > 0) { %>
+              <% genres.forEach(g => { %>
+                <option value="<%= g %>" <%= selectedGenre === g ? 'selected' : '' %>><%= g %></option>
+              <% }) %>
+            <% } %>
+          </select>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition">
+            ค้นหา
+          </button>
+          <% if (search || selectedGenre) { %>
+            <a href="/" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium rounded-xl text-center transition">
+              ล้างค่า
+            </a>
+          <% } %>
+        </form>
+      </div>
+
+      <% if (!allBooks || allBooks.length === 0) { %>
+        <div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500">
+          ไม่พบหนังสือที่ตรงกับเงื่อนไขการค้นหา
+        </div>
+      <% } else { %>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+          <% allBooks.forEach(book => { %>
+            <a href="/books/<%= book.book_id %>" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-indigo-200 transition flex flex-col">
+              <div class="aspect-[2/3] bg-slate-100 overflow-hidden">
+                <img 
+                  src="<%= book.cover_image || 'https://via.placeholder.com/300x450?text=No+Cover' %>" 
+                  alt="<%= book.title %>" 
+                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                >
+              </div>
+              <div class="p-4 flex-grow flex flex-col justify-between">
+                <div>
+                  <span class="inline-block px-2.5 py-0.5 bg-indigo-50 text-indigo-600 text-[11px] font-medium rounded-full mb-1.5">
+                    <%= book.genre || 'ทั่วไป' %>
+                  </span>
+                  <h3 class="font-bold text-slate-900 text-base line-clamp-1 group-hover:text-indigo-600 transition">
+                    <%= book.title %>
+                  </h3>
+                  <p class="text-xs text-slate-500 line-clamp-2 mt-1">
+                    <%= book.description %>
+                  </p>
+                </div>
+                <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 text-xs">
+                  <span class="font-bold text-amber-500">★ <%= Number(book.avg_rating || 0).toFixed(1) %></span>
+                  <span class="text-slate-400"><%= book.total_pages %> หน้า</span>
+                </div>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
   </main>
+  <%- include('../partials/footer') %>
+
+  <!-- Script เลื่อนแบนเนอร์ Featured Books -->
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.featured-slide');
+
+    function showSlide(index) {
+      if (slides.length === 0) return;
+      slides.forEach(s => {
+        s.classList.add('hidden');
+        s.classList.remove('flex');
+      });
+      currentSlide = (index + slides.length) % slides.length;
+      slides[currentSlide].classList.remove('hidden');
+      slides[currentSlide].classList.add('flex');
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+  </script>
 
 </body>
 </html>
