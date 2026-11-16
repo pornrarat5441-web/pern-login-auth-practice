@@ -84,6 +84,16 @@ const cookieOptions = {
     res.json(req.user);
   });
 
+  // list users
+
+  router.get("/users", protect, async (req, res) => {
+    const users = await pool.query(
+      "SELECT id, name, email FROM users ORDER BY id"
+    );
+
+    res.json({ users: users.rows });
+  });
+
   //logout
 
   router.post("/logout", (req, res) => {

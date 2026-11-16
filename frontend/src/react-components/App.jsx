@@ -3,11 +3,11 @@ import axios from "axios";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 //component
-import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import NotFound from "./components/NotFound";
+import Navbar from "../components/Navbar";
+import Home from "../pages/Home";
+import Login from "../pages/Login";
+import Register from "../pages/Register";
+import NotFound from "../components/NotFound";
 
 axios.defaults.withCredentials = true; //send cookies with every request
 
