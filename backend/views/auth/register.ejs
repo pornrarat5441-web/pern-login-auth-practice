@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | PERN Auth</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body class="min-h-screen bg-gray-100">
+
+  <%- include('../partials/navbar', { user }) %>
+
+  <main class="min-h-[80vh] flex items-center justify-center p-4">
+
+    <form id="registerForm"
+      class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+
+      <h2 class="text-2xl font-bold mb-6 text-center">
+        Create Account
+      </h2>
+
+      <p id="errorMessage"
+        class="hidden text-red-500 mb-4 text-sm">
+      </p>
+
+      <div class="mb-4">
+        <label for="name" class="block mb-2 font-medium">
+          Name
+        </label>
+
+        <input
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Enter your name"
+          required
+          class="border rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <div class="mb-4">
+        <label for="email" class="block mb-2 font-medium">
+          Email
+        </label>
+
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Enter your email"
+          required
+          class="border rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <div class="mb-6">
+        <label for="password" class="block mb-2 font-medium">
+          Password
+        </label>
+
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+          class="border rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <button
+        type="submit"
+        id="registerButton"
+        class="bg-blue-500 hover:bg-blue-600 text-white p-3 w-full rounded-md font-medium">
+        Register
+      </button>
+
+      <p class="text-center mt-5 text-gray-600">
+        Already have an account?
+        <a href="/login" class="text-blue-500 hover:underline">
+          Login
+        </a>
+      </p>
+
+    </form>
+  </main>
+
+  <script>
+    const registerForm = document.getElementById('registerForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const registerButton = document.getElementById('registerButton');
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      errorMessage.classList.add('hidden');
+      registerButton.disabled = true;
+      registerButton.textContent = 'Creating account...';
+
+      const formData = {
+        name: registerForm.name.value.trim(),
+        email: registerForm.email.value.trim(),
+        password: registerForm.password.value
+      };
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Registration failed');
+        }
+
+        window.location.href = '/';
+
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.remove('hidden');
+
+      } finally {
+        registerButton.disabled = false;
+        registerButton.textContent = 'Register';
+      }
+    });
+  </script>
+
+</body>
+</html>

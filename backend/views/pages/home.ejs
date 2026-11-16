@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home | PERN Auth</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body class="min-h-screen bg-gray-100">
+
+  <%- include('../partials/navbar', { user }) %>
+
+  <main class="min-h-[80vh] flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg text-center">
+
+      <% if (user) { %>
+
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+          Welcome, <%= user.name %>!
+        </h2>
+
+        <p class="text-gray-600">
+          Email: <%= user.email %>
+        </p>
+
+      <% } else { %>
+
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">
+          Please log in or register
+        </h2>
+
+        <div class="flex flex-col gap-4">
+
+          <a href="/login"
+            class="w-full text-white bg-blue-500 p-3 rounded-md hover:bg-blue-600 font-medium">
+            Login
+          </a>
+
+          <a href="/register"
+            class="w-full text-gray-800 bg-gray-300 p-3 rounded-md hover:bg-gray-400 font-medium">
+            Register
+          </a>
+
+        </div>
+
+      <% } %>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
