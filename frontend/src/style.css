@@ -1,4 +1,66 @@
 @import "tailwindcss";
 
+@theme {
+  --color-white: #fffaf3;
+
+  --color-slate-50: #fbf7f1;
+  --color-slate-100: #f3eadc;
+  --color-slate-200: #e6d5bd;
+  --color-slate-300: #cfb696;
+  --color-slate-400: #ad8d68;
+  --color-slate-500: #8e6e4e;
+  --color-slate-600: #71543d;
+  --color-slate-700: #584130;
+  --color-slate-800: #423126;
+  --color-slate-900: #30231c;
+  --color-slate-950: #211713;
+
+  --color-indigo-50: #fff1ed;
+  --color-indigo-100: #ffdfd5;
+  --color-indigo-200: #ffc1af;
+  --color-indigo-300: #f49b80;
+  --color-indigo-400: #e56f50;
+  --color-indigo-500: #cf4c34;
+  --color-indigo-600: #ae3827;
+  --color-indigo-700: #8c2c22;
+  --color-indigo-800: #6f251e;
+  --color-indigo-900: #581f1b;
+  --color-indigo-950: #36120f;
+
+  --color-amber-50: #fff7e6;
+  --color-amber-100: #ffedc2;
+  --color-amber-200: #f9d98e;
+  --color-amber-300: #f0bf5b;
+  --color-amber-400: #dfa13a;
+  --color-amber-500: #c08126;
+  --color-amber-600: #9e631d;
+  --color-amber-700: #7d4a19;
+  --color-amber-800: #603917;
+  --color-amber-900: #422711;
+
+  --color-emerald-50: #f5f2e6;
+  --color-emerald-100: #ece5c9;
+  --color-emerald-200: #d8c98f;
+  --color-emerald-300: #c4ad5b;
+  --color-emerald-400: #ac8f39;
+  --color-emerald-500: #8c7029;
+  --color-emerald-600: #725922;
+  --color-emerald-700: #5a451d;
+  --color-emerald-800: #453519;
+  --color-emerald-900: #302513;
+
+  --color-red-50: #fff1ed;
+  --color-red-100: #ffe1d8;
+  --color-red-200: #ffc1b2;
+  --color-red-300: #f49a83;
+  --color-red-400: #e86b51;
+  --color-red-500: #cf4932;
+  --color-red-600: #b23525;
+  --color-red-700: #902b21;
+  --color-red-800: #73251f;
+  --color-red-900: #5b201b;
+  --color-red-950: #35110f;
+}
+
 /* Scan EJS files for Tailwind classes */
 @source "../../backend/views/**/*.ejs";
