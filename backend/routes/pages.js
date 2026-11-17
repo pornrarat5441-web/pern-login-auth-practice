@@ -31,12 +31,12 @@ router.use(async (req, res, next) => {
 });
 
 // Home
-// GET / - หน้าแรก (Featured Books, Top 10 Trending, All Books + Search/Filter)
+// GET / - หน้าแรก
 router.get('/', async (req, res) => {
   try {
     const { search, genre } = req.query;
 
-    // 1. ดึงหนังสือแนะนำ (is_featured = TRUE)
+    // 1. ดึงหนังสือแนะนำ (is_featured = TRUE) อยู่ใน sql
     const featuredResult = await pool.query(`
       SELECT b.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.review_id) AS review_count
       FROM books b
