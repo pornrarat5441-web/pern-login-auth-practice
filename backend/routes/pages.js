@@ -29,11 +29,15 @@ const ensureVisitorTable = () => {
       CREATE TABLE IF NOT EXISTS daily_home_visitors (
         visit_date DATE NOT NULL,
         visitor_hash TEXT NOT NULL,
+        ip_address INET NOT NULL,
         first_visit TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         last_visit TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (visit_date, visitor_hash)
       )
-    `).then(() => undefined).catch((error) => {
+    `).then(() => pool.query(`
+      ALTER TABLE daily_home_visitors
+      ADD COLUMN IF NOT EXISTS ip_address INET
+    `)).then(() => undefined).catch((error) => {
       visitorTableReady = undefined;
       throw error;
     });
@@ -60,11 +64,13 @@ const getVisitorStats = async (req) => {
 
   await ensureVisitorTable();
   await pool.query(`
-    INSERT INTO daily_home_visitors (visit_date, visitor_hash)
-    VALUES ($1::date, $2)
+    INSERT INTO daily_home_visitors (visit_date, visitor_hash, ip_address)
+    VALUES ($1::date, $2, $3::inet)
     ON CONFLICT (visit_date, visitor_hash)
-    DO UPDATE SET last_visit = CURRENT_TIMESTAMP
-  `, [visitDate, visitorHash]);
+    DO UPDATE SET
+      ip_address = EXCLUDED.ip_address,
+      last_visit = CURRENT_TIMESTAMP
+  `, [visitDate, visitorHash, ip]);
 
   if (lastVisitorCleanupDate !== visitDate) {
     await pool.query(
