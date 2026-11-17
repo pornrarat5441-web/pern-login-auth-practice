@@ -1,8 +1,90 @@
 import express from 'express';
+import { createHmac } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import pool from '../config/db.js';
 
 const router = express.Router();
+let visitorTableReady;
+let lastVisitorCleanupDate;
+
+const getBangkokDate = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const dateParts = Object.fromEntries(
+    parts
+      .filter(({ type }) => type !== 'literal')
+      .map(({ type, value }) => [type, value])
+  );
+
+  return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+};
+
+const ensureVisitorTable = () => {
+  if (!visitorTableReady) {
+    visitorTableReady = pool.query(`
+      CREATE TABLE IF NOT EXISTS daily_home_visitors (
+        visit_date DATE NOT NULL,
+        visitor_hash TEXT NOT NULL,
+        first_visit TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_visit TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (visit_date, visitor_hash)
+      )
+    `).then(() => undefined).catch((error) => {
+      visitorTableReady = undefined;
+      throw error;
+    });
+  }
+
+  return visitorTableReady;
+};
+
+const getVisitorStats = async (req) => {
+  const ip = req.ip;
+  const secret = process.env.JWT_SECRET;
+
+  if (!ip) {
+    throw new Error('Could not determine visitor IP address');
+  }
+  if (!secret) {
+    throw new Error('JWT_SECRET is required to hash visitor IP addresses');
+  }
+
+  const visitDate = getBangkokDate();
+  const visitorHash = createHmac('sha256', secret)
+    .update(`${visitDate}:${ip}`)
+    .digest('hex');
+
+  await ensureVisitorTable();
+  await pool.query(`
+    INSERT INTO daily_home_visitors (visit_date, visitor_hash)
+    VALUES ($1::date, $2)
+    ON CONFLICT (visit_date, visitor_hash)
+    DO UPDATE SET last_visit = CURRENT_TIMESTAMP
+  `, [visitDate, visitorHash]);
+
+  if (lastVisitorCleanupDate !== visitDate) {
+    await pool.query(
+      'DELETE FROM daily_home_visitors WHERE visit_date < $1::date',
+      [visitDate]
+    );
+    lastVisitorCleanupDate = visitDate;
+  }
+
+  const result = await pool.query(`
+    SELECT
+      COUNT(*)::int AS "todayVisitors",
+      MIN(first_visit) AS "firstVisit",
+      MAX(last_visit) AS "lastVisit"
+    FROM daily_home_visitors
+    WHERE visit_date = $1::date
+  `, [visitDate]);
+
+  return result.rows[0];
+};
 
 // ตรวจสอบ User จาก JWT Cookie
 const getCurrentUser = async (req) => {
@@ -29,6 +111,11 @@ router.use(async (req, res, next) => {
   req.user = await getCurrentUser(req);
   next();
 });
+
+
+
+
+
 
 // Home
 // GET / - หน้าแรก
@@ -83,6 +170,7 @@ router.get('/', async (req, res) => {
       SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre != '' ORDER BY genre ASC
     `);
     const genres = genresResult.rows.map(row => row.genre);
+    const visitorStats = await getVisitorStats(req);
 
     res.render('pages/home', {
       user: req.user || null,
@@ -91,7 +179,8 @@ router.get('/', async (req, res) => {
       allBooks: allBooksResult.rows,
       genres,
       search: search || '',
-      selectedGenre: genre || ''
+      selectedGenre: genre || '',
+      visitorStats
     });
 
   } catch (err) {
@@ -117,6 +206,12 @@ router.get('/register', async (req, res) => {
 
   res.render('auth/register', { error: null, user });
 });
+
+
+
+
+
+
 
 //book
 // GET /books/:id - แสดงหน้ารายละเอียดหนังสือ + รีวิว
@@ -199,6 +294,11 @@ router.post('/books/:id/review', async (req, res) => {
   }
 });
 
+
+
+
+
+
 //rated book
 // GET /rated-books - แสดงรายการหนังสือทั้งหมดที่ User เคยรีวิวไว้
 router.get('/rated-books', async (req, res) => {
@@ -254,6 +354,13 @@ router.post('/rated-books/delete/:reviewId', async (req, res) => {
     res.status(500).send('ไม่สามารถลบรีวิวได้');
   }
 });
+
+
+
+
+
+
+
 
 //yourlist
 // 1. GET /your-list - แสดงรายการหนังสือใน Your List ของผู้ใช้
@@ -364,5 +471,6 @@ router.post('/your-list/remove/:bookId', async (req, res) => {
     res.status(500).send('ไม่สามารถลบหนังสือออกจากลิสต์ได้');
   }
 });
+
 
 export default router;

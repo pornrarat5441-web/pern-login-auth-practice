@@ -6,12 +6,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import authRoutes from "./routes/auth.js";
-import pageRoutes from "./routes/pages.js"
-
+import pageRoutes from "./routes/pages.js";
 
 dotenv.config();
 
 const app = express();
+
+app.set('trust proxy', true);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,21 +30,14 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-//static file
+// static file
 app.use(express.static(path.join(__dirname, 'public')));
 
-//api route
+// api routes
 app.use("/api/auth", authRoutes);
 
 // Page Routes
 app.use('/', pageRoutes);
-
-// // Middleware ดักจับ 404 Not Found (วางไว้หลัง Routes ทั้งหมด)
-// app.use((req, res) => {
-//   res.status(404).render('pages/404', {
-//     user: req.user || null
-//   });
-// });
 
 const PORT = process.env.PORT || 5001;
 
